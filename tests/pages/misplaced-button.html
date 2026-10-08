@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Misplaced Button Test</title>
+  <style>
+    body { margin: 0; padding: 20px; font-family: sans-serif; position: relative; }
+    .floating-broken-btn {
+      position: absolute;
+      left: 1200px;
+      top: 50px;
+      padding: 12px 24px;
+      background: #e11d48;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Misplaced Absolute Button Test</h1>
+  <p>The action button below is absolute positioned far out to the right.</p>
+  <button class="floating-broken-btn">Offscreen Action Button</button>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Already Responsive Page</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, sans-serif; padding: 16px; background: #f8fafc; color: #0f172a; }
+    .container { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    img { max-width: 100%; height: auto; border-radius: 6px; }
+    .table-wrap { overflow-x: auto; width: 100%; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    button { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Clean Responsive Website</h1>
+      <p>This page uses fluid percentage widths, flexible containers, responsive images, and proper overflow wrappers.</p>
+      <button>Responsive Action</button>
+    </div>
+    <div class="card">
+      <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='200'><rect width='600' height='200' fill='%236366f1'/></svg>" alt="Responsive Banner" />
+    </div>
+  </div>
+</body>
+</html>

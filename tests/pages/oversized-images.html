@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oversized Images Test</title>
+  <style>
+    body { margin: 0; padding: 20px; font-family: sans-serif; }
+    img.large-pic {
+      width: 1500px;
+      height: 450px;
+      display: block;
+      background: #10b981;
+    }
+  </style>
+</head>
+<body>
+  <h1>Oversized Image Without max-width: 100%</h1>
+  <img class="large-pic" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1500' height='450'><rect width='1500' height='450' fill='%2310b981'/><text x='50%25' y='50%25' fill='white' font-size='28' text-anchor='middle'>1500px Picture</text></svg>" alt="Large Picture" />
+</body>
+</html>

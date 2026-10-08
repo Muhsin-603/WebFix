@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "WebFix — Responsive Layout Fixer",
+  "version": "0.1.0",
+  "description": "Automatically inspects, detects, and fixes webpage responsiveness issues directly in the browser session.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "128": "icons/icon.svg"
+    }
+  },
+  "options_page": "settings/settings.html",
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/content-script.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "128": "icons/icon.svg"
+  }
+}

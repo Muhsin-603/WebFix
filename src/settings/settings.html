@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebFix — Preferences &amp; Settings</title>
+  <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+  <div class="settings-container">
+    <header class="settings-header">
+      <div class="header-brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+            <path d="M7 8h10"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>WebFix Configuration</h1>
+          <p class="subtitle">Customize rule-based adaptation behaviors &amp; automation</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="settings-body">
+      <section class="settings-card">
+        <h2>Automation Settings</h2>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-title">Automatic Mode</span>
+            <p class="setting-desc">Analyze and adapt non-responsive pages automatically upon page load without needing to open the popup.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-auto-mode" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-title">Apply only safe, low-risk fixes automatically</span>
+            <p class="setting-desc">Restricts automatic changes strictly to high-confidence CSS adjustments (images, fixed-width containers). Leaves buttons and sensitive elements for manual approval.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-safe-only" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-title">Show floating change indicator</span>
+            <p class="setting-desc">Displays a subtle dismissible badge in the corner of the webpage when automatic fixes are applied.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-show-notifications" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="settings-card">
+        <h2>About WebFix V0.1</h2>
+        <div class="info-row">
+          <span class="info-label">Version</span>
+          <span class="info-value">0.1.0 (Core Engine)</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Engine Architecture</span>
+          <span class="info-value">Deterministic Rule-based Adaptation</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Privacy &amp; Safety</span>
+          <span class="info-value">100% Local Browser Execution &bull; Zero Server Side Modifications</span>
+        </div>
+      </section>
+
+      <div class="toast" id="save-toast" style="display: none;">
+        ✓ Preferences saved successfully
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="settings.ts"></script>
+</body>
+</html>
