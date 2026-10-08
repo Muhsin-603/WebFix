@@ -23,12 +23,6 @@ export class DOMAnalyzer {
       return false;
     }
 
-    const rect = el.getBoundingClientRect();
-    // Element must have some dimension unless it's body/html
-    if (rect.width === 0 && rect.height === 0 && tagName !== 'body' && tagName !== 'html') {
-      return false;
-    }
-
     return true;
   }
 

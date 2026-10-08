@@ -7,13 +7,17 @@ export class MisplacedButtonDetector implements Detector {
   id = 'misplaced-button';
   name = 'Misplaced Button Detector';
 
+  private static readonly MAX_BUTTONS = 150;
+
   detect(context: AnalysisContext): DetectionResult[] {
     const results: DetectionResult[] = [];
     const vpWidth = context.viewport.width;
 
-    const buttons = context.document.querySelectorAll<HTMLElement>(
+    const allButtons = context.document.querySelectorAll<HTMLElement>(
       'button, a[role="button"], input[type="button"], input[type="submit"], .btn, .button'
     );
+    // Cap to avoid O(n) layout reflows on massive pages
+    const buttons = Array.from(allButtons).slice(0, MisplacedButtonDetector.MAX_BUTTONS);
 
     buttons.forEach((btn) => {
       if (!DOMAnalyzer.isVisible(btn)) return;

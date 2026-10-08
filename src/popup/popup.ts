@@ -1,10 +1,13 @@
 import {
   WebFixMessage,
   WebFixResponse,
+} from "../shared/messaging/index.js";
+
+import {
   PageStatusPayload,
   ProposedFix,
   DiagnosticLogEntry,
-} from '../shared/types/index.js';
+} from "../shared/types/index.js";
 
 class WebFixPopupController {
   private currentPayload: PageStatusPayload | null = null;
@@ -42,11 +45,20 @@ class WebFixPopupController {
     }
   }
 
-  private async sendMessageToTab(message: WebFixMessage): Promise<WebFixResponse<PageStatusPayload>> {
+  private async sendMessageToTab(
+    message: WebFixMessage,
+    timeoutMs = 25000
+  ): Promise<WebFixResponse<PageStatusPayload>> {
     return new Promise((resolve) => {
+      // Hard timeout — Manifest V3 ports can silently die, this prevents hanging forever
+      const timer = setTimeout(() => {
+        resolve({ success: false, error: 'Analysis timed out. The page may be too complex. Try refreshing and retrying.' });
+      }, timeoutMs);
+
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const activeTab = tabs[0];
         if (!activeTab || !activeTab.id) {
+          clearTimeout(timer);
           resolve({ success: false, error: 'No active tab found' });
           return;
         }
@@ -66,23 +78,26 @@ class WebFixPopupController {
                   },
                   () => {
                     if (chrome.runtime.lastError) {
+                      clearTimeout(timer);
                       resolve({
                         success: false,
                         error: chrome.runtime.lastError.message || 'Cannot communicate with page. Please refresh the page.',
                       });
                     } else {
                       // Script injected, wait briefly and retry
-                      setTimeout(() => attemptSend(true), 150);
+                      setTimeout(() => attemptSend(true), 200);
                     }
                   }
                 );
               } else {
+                clearTimeout(timer);
                 resolve({
                   success: false,
                   error: err.message || 'Cannot communicate with page. Please refresh the page.',
                 });
               }
             } else {
+              clearTimeout(timer);
               resolve(response || { success: false, error: 'Empty response' });
             }
           });
@@ -147,36 +162,44 @@ class WebFixPopupController {
       logBox.innerHTML = '';
     }
 
-    // Interactive progress pipeline
+    const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+    // ─── CRITICAL FIX ─────────────────────────────────────────────────────────
+    // Fire the real content-script analysis IMMEDIATELY in parallel.
+    // The fake progress animation stages are cosmetic only — they run concurrently.
+    // We await the REAL result at the end, not mid-way through.
+    // This means progress never blocks at 80% waiting for the content script.
+    // ─────────────────────────────────────────────────────────────────────────
+    const analysisPromise = this.sendMessageToTab({ type: 'ANALYZE_PAGE' });
+
+    // Cosmetic progress stages (run in parallel with real analysis)
     this.setProgressBar(10, 'Initializing DOM inspection...');
     this.appendProgressLog('Starting WebFix layout audit engine...', 'highlight');
 
-    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-    await delay(70);
+    await delay(300);
     this.setProgressBar(25, 'Inspecting Viewport & Dimensions...');
     this.appendProgressLog('Measuring viewport scrollWidth vs clientWidth...');
 
-    await delay(80);
-    this.setProgressBar(45, 'Scanning Horizontal Overflow...');
+    await delay(400);
+    this.setProgressBar(42, 'Scanning Horizontal Overflow...');
     this.appendProgressLog('Evaluating container boundaries & horizontal clipping...');
 
-    await delay(90);
-    this.setProgressBar(65, 'Auditing Rigid Fixed-Width Containers...');
+    await delay(450);
+    this.setProgressBar(58, 'Auditing Rigid Fixed-Width Containers...');
     this.appendProgressLog('Inspecting fixed-width elements, max-width, & min-width...');
 
-    await delay(80);
-    this.setProgressBar(80, 'Analyzing Images, Media, & Tables...');
+    await delay(400);
+    this.setProgressBar(72, 'Analyzing Images, Media, & Tables...');
     this.appendProgressLog('Checking <img> aspect ratios and <table> scroll wrappers...');
 
-    // Call actual analysis on the content script
-    const res = await this.sendMessageToTab({ type: 'ANALYZE_PAGE' });
-
-    await delay(60);
-    this.setProgressBar(95, 'Validating Misplaced Buttons & Score...');
+    await delay(400);
+    this.setProgressBar(85, 'Validating Misplaced Buttons & Score...');
     this.appendProgressLog('Auditing button alignment geometry & calculating heuristic score...');
 
-    await delay(60);
+    // Now wait for the actual analysis result (may already be done)
+    this.appendProgressLog('⏳ Waiting for page inspection to complete...', 'highlight');
+    const res = await analysisPromise;
+
     this.setProgressBar(100, 'Analysis Complete ✓', true);
 
     if (analyzeBtn) {

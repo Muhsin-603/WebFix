@@ -9,13 +9,19 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "keywords": ["chrome-extension", "responsive-design", "layout-fixer", "web-accessibility"],
+  "keywords": [
+    "chrome-extension",
+    "responsive-design",
+    "layout-fixer",
+    "web-accessibility"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/chrome": "^0.3.4",
+    "jsdom": "^25.0.1",
     "typescript": "^5.6.3",
     "vite": "^5.4.10",
-    "vitest": "^2.1.4",
-    "jsdom": "^25.0.1"
+    "vitest": "^2.1.4"
   }
 }
