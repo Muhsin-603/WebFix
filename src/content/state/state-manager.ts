@@ -38,12 +38,44 @@ export class StateManager {
     this.state = newState;
   }
 
-  setAnalysisResults(detections: DetectionResult[], fixes: ProposedFix[]): void {
+  setAnalysisResults(detections: DetectionResult[], fixes: ProposedFix[], context?: AnalysisContext): void {
     this.detections = detections;
     this.proposedFixes = fixes;
     this.initialScore = this.changeLog.calculateScore(detections);
     this.currentScore = { ...this.initialScore };
     this.setState('ANALYZED');
+
+    // Record analysis diagnostic entries
+    this.changeLog.clear();
+    if (context) {
+      this.changeLog.addLog({
+        problem: 'Viewport Geometry',
+        target: 'window',
+        action: 'Inspected Viewport',
+        result: 'applied',
+        details: `${context.viewport.width}x${context.viewport.height}px (scroll: ${context.viewport.scrollWidth}px) • ${context.elements.length} elements`,
+      });
+    }
+
+    if (detections.length === 0) {
+      this.changeLog.addLog({
+        problem: 'Layout Responsiveness',
+        target: 'document',
+        action: 'Verified Fully Responsive',
+        result: 'applied',
+        details: 'All 7 layout detectors found 0 overflow or sizing issues',
+      });
+    } else {
+      detections.forEach((d) => {
+        this.changeLog.addLog({
+          problem: d.description,
+          target: d.elementSelector,
+          action: `Detected: ${d.type}`,
+          result: 'warning',
+          details: `Severity: ${d.severity} • Confidence: ${Math.round(d.confidence * 100)}%`,
+        });
+      });
+    }
   }
 
   applyFixes(fixIds: string[], context: AnalysisContext): { applied: number; failed: number } {

@@ -80,7 +80,28 @@ export class CSSFixEngine {
 
   private render(): void {
     const styleEl = this.getOrCreateStyleElement();
-    const allCss = Array.from(this.styleRules.values()).join('\n\n');
+    if (this.styleRules.size === 0) {
+      styleEl.textContent = '';
+      return;
+    }
+
+    // Root-level containment & visual dashed indicator on modified elements
+    const baseFix = `
+/* WebFix Root Viewport Containment */
+html, body {
+  max-width: 100% !important;
+  overflow-x: clip !important;
+}
+
+/* WebFix Visual Modification Highlight */
+[${ATTR_WEBFIX_MODIFIED}] {
+  outline: 2px dashed #06b6d4 !important;
+  outline-offset: 2px !important;
+  box-sizing: border-box !important;
+}
+`;
+
+    const allCss = baseFix + '\n' + Array.from(this.styleRules.values()).join('\n\n');
     styleEl.textContent = allCss;
   }
 }

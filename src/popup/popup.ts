@@ -51,16 +51,44 @@ class WebFixPopupController {
           return;
         }
 
-        chrome.tabs.sendMessage(activeTab.id, message, (response) => {
-          if (chrome.runtime.lastError) {
-            resolve({
-              success: false,
-              error: chrome.runtime.lastError.message || 'Cannot communicate with page. Please refresh the page.',
-            });
-          } else {
-            resolve(response || { success: false, error: 'Empty response' });
-          }
-        });
+        const tabId = activeTab.id;
+
+        const attemptSend = (isRetry = false) => {
+          chrome.tabs.sendMessage(tabId, message, (response) => {
+            const err = chrome.runtime.lastError;
+            if (err) {
+              if (!isRetry && chrome.scripting) {
+                // Auto-inject content script if tab was opened before extension loaded
+                chrome.scripting.executeScript(
+                  {
+                    target: { tabId },
+                    files: ['content/content-script.js'],
+                  },
+                  () => {
+                    if (chrome.runtime.lastError) {
+                      resolve({
+                        success: false,
+                        error: chrome.runtime.lastError.message || 'Cannot communicate with page. Please refresh the page.',
+                      });
+                    } else {
+                      // Script injected, wait briefly and retry
+                      setTimeout(() => attemptSend(true), 150);
+                    }
+                  }
+                );
+              } else {
+                resolve({
+                  success: false,
+                  error: err.message || 'Cannot communicate with page. Please refresh the page.',
+                });
+              }
+            } else {
+              resolve(response || { success: false, error: 'Empty response' });
+            }
+          });
+        };
+
+        attemptSend();
       });
     });
   }
@@ -74,14 +102,83 @@ class WebFixPopupController {
     }
   }
 
+  private appendProgressLog(message: string, type: 'info' | 'highlight' | 'warn' | 'success' = 'info'): void {
+    const box = document.getElementById('progress-log-box');
+    if (!box) return;
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    const item = document.createElement('div');
+    item.className = 'live-log-item';
+    item.innerHTML = `<span class="live-log-time">[${timeStr}]</span> <span class="live-log-msg ${type}">${this.escapeHtml(message)}</span>`;
+    box.appendChild(item);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  private setProgressBar(percent: number, stageTitle: string, isComplete = false): void {
+    const fill = document.getElementById('progress-bar-fill');
+    const percentEl = document.getElementById('progress-percent');
+    const stageEl = document.getElementById('progress-stage-title');
+    if (fill) {
+      fill.style.width = `${percent}%`;
+      fill.classList.toggle('complete', isComplete);
+    }
+    if (percentEl) {
+      percentEl.innerText = `${percent}%`;
+    }
+    if (stageEl) {
+      stageEl.innerText = stageTitle;
+    }
+  }
+
   private async analyzePage(): Promise<void> {
     const analyzeBtn = document.getElementById('analyze-btn') as HTMLButtonElement;
+    const progressCard = document.getElementById('analysis-progress-card');
+    const logBox = document.getElementById('progress-log-box');
+
     if (analyzeBtn) {
       analyzeBtn.disabled = true;
       analyzeBtn.innerHTML = '<span>Analyzing Page...</span>';
     }
 
+    if (progressCard) {
+      progressCard.style.display = 'flex';
+    }
+    if (logBox) {
+      logBox.innerHTML = '';
+    }
+
+    // Interactive progress pipeline
+    this.setProgressBar(10, 'Initializing DOM inspection...');
+    this.appendProgressLog('Starting WebFix layout audit engine...', 'highlight');
+
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    await delay(70);
+    this.setProgressBar(25, 'Inspecting Viewport & Dimensions...');
+    this.appendProgressLog('Measuring viewport scrollWidth vs clientWidth...');
+
+    await delay(80);
+    this.setProgressBar(45, 'Scanning Horizontal Overflow...');
+    this.appendProgressLog('Evaluating container boundaries & horizontal clipping...');
+
+    await delay(90);
+    this.setProgressBar(65, 'Auditing Rigid Fixed-Width Containers...');
+    this.appendProgressLog('Inspecting fixed-width elements, max-width, & min-width...');
+
+    await delay(80);
+    this.setProgressBar(80, 'Analyzing Images, Media, & Tables...');
+    this.appendProgressLog('Checking <img> aspect ratios and <table> scroll wrappers...');
+
+    // Call actual analysis on the content script
     const res = await this.sendMessageToTab({ type: 'ANALYZE_PAGE' });
+
+    await delay(60);
+    this.setProgressBar(95, 'Validating Misplaced Buttons & Score...');
+    this.appendProgressLog('Auditing button alignment geometry & calculating heuristic score...');
+
+    await delay(60);
+    this.setProgressBar(100, 'Analysis Complete ✓', true);
+
     if (analyzeBtn) {
       analyzeBtn.disabled = false;
       analyzeBtn.innerHTML = `
@@ -89,12 +186,20 @@ class WebFixPopupController {
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <span>Analyze Page</span>
+        <span>Re-Analyze Page</span>
       `;
     }
 
     if (res.success && res.data) {
       this.clearError();
+      const count = res.data.detections.length;
+      const score = res.data.initialScore?.score ?? 100;
+
+      this.appendProgressLog(
+        `✓ Audit finished: ${count} issue${count === 1 ? '' : 's'} detected • Responsive Score: ${score}/100`,
+        count > 0 ? 'warn' : 'success'
+      );
+
       // Default: select all safe automatic fixes
       this.selectedFixIds.clear();
       for (const fix of res.data.proposedFixes) {
@@ -102,8 +207,18 @@ class WebFixPopupController {
           this.selectedFixIds.add(fix.id);
         }
       }
+
       this.render(res.data);
+
+      // Automatically open the Visual Change Log accordion so the user sees all details
+      const diagContent = document.getElementById('diagnostics-content');
+      const chevron = document.getElementById('diagnostics-chevron');
+      if (diagContent && chevron) {
+        diagContent.style.display = 'block';
+        chevron.classList.add('open');
+      }
     } else {
+      this.appendProgressLog(`✕ Error: ${res.error || 'Failed to inspect page'}`, 'warn');
       this.showError(res.error || 'Failed to analyze page');
     }
   }

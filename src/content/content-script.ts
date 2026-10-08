@@ -77,7 +77,10 @@ class WebFixContentController {
 
       case 'APPLY_FIXES': {
         const context = AnalysisEngine.createContext(document, window);
-        this.stateManager.applyFixes(message.fixIds, context);
+        const { applied } = this.stateManager.applyFixes(message.fixIds, context);
+        if (applied > 0) {
+          this.renderStatusBadge(applied);
+        }
         return this.stateManager.getStatusPayload();
       }
 
@@ -89,7 +92,10 @@ class WebFixContentController {
       case 'TOGGLE_FIX': {
         if (message.enabled) {
           const context = AnalysisEngine.createContext(document, window);
-          this.stateManager.applyFixes([message.fixId], context);
+          const { applied } = this.stateManager.applyFixes([message.fixId], context);
+          if (applied > 0) {
+            this.renderStatusBadge(applied);
+          }
         } else {
           this.stateManager.revertFix(message.fixId);
         }
@@ -125,7 +131,7 @@ class WebFixContentController {
     }
 
     const proposedFixes = this.fixPlanner.planFixes(allDetections);
-    this.stateManager.setAnalysisResults(allDetections, proposedFixes);
+    this.stateManager.setAnalysisResults(allDetections, proposedFixes, context);
     logger.info(`Analysis complete. Found ${allDetections.length} problem(s), planned ${proposedFixes.length} fix(es).`);
 
     return this.stateManager.getStatusPayload();

@@ -5,7 +5,8 @@
   "description": "Automatically inspects, detects, and fixes webpage responsiveness issues directly in the browser session.",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "scripting"
   ],
   "action": {
     "default_popup": "popup/popup.html",
